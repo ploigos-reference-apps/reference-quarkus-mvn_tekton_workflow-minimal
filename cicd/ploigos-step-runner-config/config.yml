@@ -1,0 +1,77 @@
+---
+tssc-config:
+  config-decryptors:
+  - implementer: SOPS
+
+  global-defaults:
+    organization: ploigos-ref
+    application-name: ref-quarkus-mvn-tekton-min
+    service-name: fruit
+
+    argocd-api: argocd-server-argocd.apps.tssc.rht-set.com
+    maven-servers:
+      internal-mirror:
+        id: internal-server
+        username: tssc
+    maven-mirrors:
+      internal-mirror:
+        id: internal-mirror
+        url: http://artifactory.apps.tssc.rht-set.com/artifactory/release/
+        mirror-of: '*'
+    container-registries:
+        registry.redhat.io:
+            username: 6340056|tssc-integration-infra
+        quay-quay-enterprise.apps.tssc.rht-set.com:
+            username: ploigos-ref+workflow_reference_quarkus_mvn_tekton_workflow_minimal
+
+  global-environment-defaults:
+    DEV:
+      kube-app-domain: dev.apps.tssc.rht-set.com
+    TEST:
+      kube-app-domain: test.apps.tssc.rht-set.com
+    PROD:
+      kube-app-domain: apps.tssc.rht-set.com
+
+  generate-metadata:
+  - implementer: Maven
+  - implementer: Git
+  - implementer: SemanticVersion
+
+  tag-source:
+  - implementer: Git
+    config: {
+    }
+
+  package:
+  - implementer: Maven
+    config: {
+    }
+
+  push-artifacts:
+  - implementer: Maven
+    config:
+      maven-push-artifact-repo-id: internal-server
+      maven-push-artifact-repo-url: http://artifactory.apps.tssc.rht-set.com/artifactory/tssc/
+
+  create-container-image:
+  - implementer: Buildah
+    config:
+      destination: localhost/tssc-reference-app-quarkus-rest-json
+
+  push-container-image:
+  - implementer: Skopeo
+    config:
+      destination-url: quay-quay-enterprise.apps.tssc.rht-set.com
+
+  deploy:
+  - implementer: ArgoCD
+    config:
+      git-email: 'napsspo+tssc@redhat.com'
+      helm-config-repo: http://gitea.tssc.rht-set.com/ploigos-reference-applications/reference-quarkus-mvn-cloud-resources_tekton_workflow-minimal.git
+      argocd-helm-chart-path: charts/reference-quarkus-mvn-deploy
+      num-replicas: 1
+      route-enabled: true
+      readiness-probe-path: /fruits
+      liveness-probe-path: /fruits
+      destination-url: docker://quay-quay-enterprise.apps.tssc.rht-set.com
+      argocd-username: admin
