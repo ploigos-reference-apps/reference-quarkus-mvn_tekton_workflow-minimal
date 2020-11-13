@@ -75,3 +75,4 @@ tssc-config:
       liveness-probe-path: /fruits
       destination-url: docker://quay-quay-enterprise.apps.tssc.rht-set.com
       argocd-username: admin
+      git-username: sa-ploigos-ref-apps
